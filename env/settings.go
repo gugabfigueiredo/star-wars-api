@@ -13,7 +13,7 @@ type settings struct {
 	Server struct {
 		Port              string        `default:"8080"`
 		Context           string        `default:"sw-api"`
-		UpdateRefsTimeout time.Duration `default:""`
+		UpdateRefsTimeout time.Duration `default:"4h"`
 	}
 
 	Database *repository.Config
