@@ -11,9 +11,9 @@ type settings struct {
 	Log *log.Config
 
 	Server struct {
-		Port string `default:"8080"`
-		Context string `default:"sw-api"`
-		UpdateRefWindow time.Duration `default:""`
+		Port              string        `default:"8080"`
+		Context           string        `default:"sw-api"`
+		UpdateRefsTimeout time.Duration `default:""`
 	}
 
 	Database *repository.Config
