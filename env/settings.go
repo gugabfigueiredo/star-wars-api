@@ -3,6 +3,8 @@ package env
 import (
 	"encoding/json"
 	"github.com/gugabfigueiredo/star-wars-api/log"
+	"github.com/gugabfigueiredo/star-wars-api/repository"
+	"time"
 )
 
 type settings struct {
@@ -11,16 +13,10 @@ type settings struct {
 	Server struct {
 		Port string `default:"8080"`
 		Context string `default:"sw-api"`
+		UpdateRefWindow time.Duration `default:""`
 	}
 
-	Database struct {
-		UserName        string `default:"user"`
-		Password        string `default:"pass"`
-		Host            string `default:"localhost"`
-		Port            string `default:"5432"`
-		DatabaseName    string `default:"sw-api"`
-		SetMaxOpenConns int    `default:"100"`
-	}
+	Database *repository.Config
 }
 
 
