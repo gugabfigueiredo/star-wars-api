@@ -19,7 +19,7 @@ var Logger *log.Logger
 
 func init() {
 
-	envconfig.MustProcess("swapi", env.Settings)
+	envconfig.MustProcess("swapi", &env.Settings)
 
 	Logger = log.New(env.Settings.Log)
 
@@ -40,7 +40,7 @@ func main() {
 	}
 
 	apiService := &service.APIService{
-		Repository:  &repository.Repo,
+		IRepo:       &repository.Repo,
 		SwapiClient: swapi.DefaultClient,
 		Logger:      Logger,
 	}
@@ -48,25 +48,28 @@ func main() {
 	// Handlers
 
 	helloHandler := &handler.HelloHandler{
-		Logger: Logger,
 		Service: helloService,
+		Logger:  Logger,
 	}
 
 	apiHandler := &handler.APIHandler{
-		Logger:     Logger,
-		APIService: apiService,
+		IService: apiService,
+		Logger:   Logger,
 	}
 
+	fs := http.FileServer(http.Dir("docs"))
 
 	r := chi.NewRouter()
 
 	r.Get("/health", helloHandler.SayHello)
+	r.Get("/docs", fs.ServeHTTP)
 
 	r.Route("/planets", func(r chi.Router) {
 		r.Get("/", apiHandler.FindAllPlanets)
 		r.Get("/name/{name:[a-z0-9_]+}", apiHandler.FindPlanetByName)
 		r.Get("/id/{planetID:[0-9]+}", apiHandler.FindPlanetByID)
-		r.Get("/update", apiHandler.UpdatePlanetRefs)
+
+		r.Get("/update-movie-refs", apiHandler.SetUpdatedPlanetRefs)
 
 		r.Post("/create", apiHandler.CreatePlanets)
 	})
@@ -89,6 +92,7 @@ func main() {
 	if err := server.ListenAndServe(); err != nil {
 		schedule <- false
 		close(schedule)
+		repository.Repo.Disconnect()
 		Logger.F("listen and serve died", "err", err)
 	}
 }
