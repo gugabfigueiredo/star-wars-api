@@ -10,17 +10,28 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+type IRepo interface {
+	GetPlanet(interface{}, *model.Planet) error
+	GetAllPlanets() ([]*model.Planet, error)
+	UpdatePlanets(planets []swapi.Planet) (*mongo.BulkWriteResult, error)
+	InsertPlanets(planets []*model.Planet) (*mongo.InsertManyResult, error)
+}
+
 type Repository struct {
 	*mongo.Client
 	Context context.Context
 	Logger *log.Logger
 }
 
+func (r *Repository) Disconnect() error {
+	return r.Client.Disconnect(r.Context)
+}
+
 func (r *Repository) Planets() *mongo.Collection {
 	return r.Database("sw-api").Collection("planets")
 }
 
-func (r *Repository) GetPlanet(filter interface{}, model interface{}) error {
+func (r *Repository) GetPlanet(filter interface{}, model *model.Planet) error {
 	return r.Planets().FindOne(r.Context, filter).Decode(model)
 }
 
@@ -32,6 +43,8 @@ func (r *Repository) GetAllPlanets() ([]*model.Planet, error) {
 		r.Logger.E("failed to query for planets", "err", err)
 		return nil, err
 	}
+
+	defer cur.Close(r.Context)
 
 	var results []*model.Planet
 	for cur.Next(r.Context) {
@@ -56,12 +69,12 @@ func (r *Repository) GetAllPlanets() ([]*model.Planet, error) {
 func (r *Repository) UpdatePlanets(planets []swapi.Planet) (*mongo.BulkWriteResult, error) {
 	var writes []mongo.WriteModel
 	for _, planet := range planets {
-		writes = append(writes, model.WritePlanetModel(planet))
+		writes = append(writes, model.WritePlanetModel(&planet))
 	}
 	return r.Planets().BulkWrite(r.Context, writes, options.BulkWrite().SetOrdered(false))
 }
 
-func (r *Repository) InsertPlanets(planets []*model.Planet) (*mongo.InsertManyResult ,error) {
+func (r *Repository) InsertPlanets(planets []*model.Planet) (*mongo.InsertManyResult, error) {
 
 	var docs []interface{}
 	for _, planet := range planets {
