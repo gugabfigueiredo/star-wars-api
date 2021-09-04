@@ -9,8 +9,8 @@ import (
 )
 
 type HelloHandler struct {
-	Logger  *log.Logger
 	Service *service.HelloService
+	Logger  *log.Logger
 }
 
 type Response struct {

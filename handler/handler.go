@@ -11,9 +11,18 @@ import (
 	"net/http"
 )
 
+type IHandler interface {
+	service.IService
+	FindAllPlanets(w http.ResponseWriter, _ *http.Request)
+	FindPlanet(w http.ResponseWriter, r *http.Request)
+	FindPlanetByID(w http.ResponseWriter, r *http.Request)
+	CreatePlanets(w http.ResponseWriter, r *http.Request)
+	SetUpdatedPlanetRefs(w http.ResponseWriter, r *http.Request)
+}
+
 type APIHandler struct {
+	service.IService
 	Logger *log.Logger
-	*service.APIService
 }
 
 func (h *APIHandler) FindAllPlanets(w http.ResponseWriter, _ *http.Request) {
@@ -23,12 +32,12 @@ func (h *APIHandler) FindAllPlanets(w http.ResponseWriter, _ *http.Request) {
 
 	planets, err := h.GetAllPlanets()
 	if err != nil {
-		h.Logger.E("Error on calling db for all planets", "err", err)
-		http.Error(w, "Error on calling db for all planets", http.StatusInternalServerError)
+		h.Logger.E("Failed to request for all planets", "err", err)
+		http.Error(w, "Failed to request for all planets", http.StatusInternalServerError)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(planets); err != nil {
+	if err := json.NewEncoder(w).Encode(&planets); err != nil {
 		h.Logger.E("Error on marshal all planets", "err", err)
 		http.Error(w, "Error on marshal all planets", http.StatusInternalServerError)
 		return
@@ -40,17 +49,18 @@ func (h *APIHandler) FindPlanetByName(w http.ResponseWriter, r *http.Request) {
 
 	name := chi.URLParam(r, "name")
 
-	h.Logger.I("Request all planets")
+	logger := h.Logger.C("name", name)
+	logger.I("Request planet by name", "name", name)
 
-	var planet *model.Planet
-	if err := h.GetPlanet(bson.M{"name": name}, planet);err != nil {
-		h.Logger.E("Error on calling db for planet by name", "err", err)
+	var planet model.Planet
+	if err := h.GetPlanet(bson.M{"name": name}, &planet); err != nil {
+		logger.E("Error on calling db for planet by name", "err", err)
 		http.Error(w, "Error on calling db for planet by name", http.StatusInternalServerError)
 		return
 	}
 
 	if err := json.NewEncoder(w).Encode(planet); err != nil {
-		h.Logger.E("Error on marshal planet by name", "err", err)
+		logger.E("Error on marshal planet by name", "err", err)
 		http.Error(w, "Error on marshal planet by name", http.StatusInternalServerError)
 		return
 	}
@@ -61,10 +71,11 @@ func (h *APIHandler) FindPlanetByID(w http.ResponseWriter, r *http.Request) {
 
 	ID := chi.URLParam(r, "planetID")
 
-	h.Logger.I("Request all planets")
+	logger := h.Logger.C("ID", ID)
+	logger.I("Request planet by id", "ID", ID)
 
-	var planet *model.Planet
-	if err := h.GetPlanet(bson.M{"_id": ID}, planet);err != nil {
+	var planet model.Planet
+	if err := h.GetPlanet(bson.M{"_id": ID}, &planet);err != nil {
 		h.Logger.E("Error on calling db for planet by id", "err", err, "_id", ID)
 		http.Error(w, "Error on calling db for planet by id", http.StatusInternalServerError)
 		return
@@ -109,12 +120,12 @@ func (h *APIHandler) CreatePlanets(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *APIHandler) UpdatePlanetRefs(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) SetUpdatedPlanetRefs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	h.Logger.I("Landing creation request")
 
-	if err := h.APIService.UpdatePlanetRefs(); err != nil {
+	if err := h.UpdatePlanetRefs(); err != nil {
 		h.Logger.E("failed to update planet refs by request", "err", err)
 		http.Error(w, "failed to update planet refs by request", http.StatusInternalServerError)
 		return
