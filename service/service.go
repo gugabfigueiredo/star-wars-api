@@ -7,9 +7,19 @@ import (
 	"time"
 )
 
+type IService interface {
+	repository.IRepo
+	UpdatePlanetRefs() error
+	SchedulePlanetUpdate(interval time.Duration) chan bool
+}
+
+type ISwapi interface {
+	AllPlanets() ([]swapi.Planet, error)
+}
+
 type APIService struct {
-	*repository.Repository
-	SwapiClient *swapi.Client
+	repository.IRepo
+	SwapiClient	ISwapi
 	Logger      *log.Logger
 }
 
