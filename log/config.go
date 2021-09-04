@@ -70,6 +70,7 @@ func New(config *Config) *Logger {
 
 	return &Logger{
 		Logger: &logger,
+		context: map[string]interface{}{"context": config.Context},
 	}
 }
 

@@ -37,35 +37,37 @@ func (l *Logger) C(tags ...interface{}) *Logger {
 }
 
 func (l *Logger) D(message string, tags ...interface{}) {
-	l.chainLog(l.Debug(), message, tags)
+	l.chainLog(l.Debug(), message, tags...)
 }
 
 func (l *Logger) F(message string, tags ...interface{}) {
-	l.chainLog(l.Fatal(), message, tags)
+	l.chainLog(l.Fatal(), message, tags...)
 }
 
 func (l *Logger) E(message string, tags ...interface{}) {
-	l.chainLog(l.Error(), message, tags)
+	l.chainLog(l.Error(), message, tags...)
 }
 
 func (l *Logger) W(message string, tags ...interface{}) {
-	l.chainLog(l.Warn(), message, tags)
+	l.chainLog(l.Warn(), message, tags...)
 }
 
 func (l *Logger) L(message string, tags ...interface{}) {
-	l.chainLog(l.Log(), message, tags)
+	l.chainLog(l.Log(), message, tags...)
 }
 
 func (l *Logger) I(message string, tags ...interface{}) {
-	l.chainLog(l.Info(), message, tags)
+	l.chainLog(l.Info(), message, tags...)
 }
 
 func (l *Logger) chainLog(e *zerolog.Event, message string, tags ...interface{}) {
-	
-	logger := l.C(tags)
 
-	for key, value := range logger.context {
-		e = e.Str(key, fmt.Sprintf("%v", value))
+	if tags != nil {
+		logger := l.C(tags...)
+
+		for key, value := range logger.context {
+			e = e.Str(key, fmt.Sprintf("%v", value))
+		}
 	}
 
 	e.Msg(message)
