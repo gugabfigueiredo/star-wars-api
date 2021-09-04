@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func WritePlanetModel(planet swapi.Planet) mongo.WriteModel {
+func WritePlanetModel(planet *swapi.Planet) mongo.WriteModel {
 	model := mongo.NewUpdateOneModel()
 	model.SetFilter(bson.M{"name": planet.Name})
 	model.SetUpdate(bson.M{
