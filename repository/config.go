@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"github.com/gugabfigueiredo/star-wars-api/log"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -21,7 +22,10 @@ func (ctx *Context) Decode(value string) error {
 
 // Config - Configuration for logging
 type Config struct {
-	URI string `default:"sw-api"`
+	Username string `default:"mongo_user"`
+	Password string `default:"mongo_pass"`
+	Host string `default:"localhost"`
+	Port string `default:"27017"`
 	Context context.Context `default:"TODO"`
 }
 
@@ -33,7 +37,9 @@ func MustInit(config *Config, logger *log.Logger) error {
 		Context: config.Context,
 	}
 	// Set client options
-	clientOptions := options.Client().ApplyURI(config.URI)
+	mongoURI := fmt.Sprintf("mongodb://%s:%s@%s:%s",
+		config.Username, config.Password, config.Host, config.Port)
+	clientOptions := options.Client().ApplyURI(mongoURI)
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(Repo.Context, clientOptions)
