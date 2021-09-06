@@ -155,8 +155,8 @@ func (h *APIHandler) RemovePlanets(w http.ResponseWriter, r *http.Request) {
 
 	res, err := h.DeletePlanets(planets)
 	if err != nil {
-		h.Logger.E("Error on insert planets into database", "err", err, "res", res)
-		http.Error(w, "Error on insert planets into database", http.StatusInternalServerError)
+		h.Logger.E("Error on delete planets into database", "err", err, "res", res)
+		http.Error(w, "Error on delete planets into database", http.StatusInternalServerError)
 		return
 	}
 
