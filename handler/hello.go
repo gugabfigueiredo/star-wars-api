@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi"
 	"github.com/gugabfigueiredo/star-wars-api/log"
 	"github.com/gugabfigueiredo/star-wars-api/service"
 	"net/http"
@@ -21,8 +20,8 @@ type Response struct {
 func (h *HelloHandler) SayHello(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Read request params
-	user := chi.URLParam(r, "user")
+	qParams := r.URL.Query()
+	user := qParams.Get("user")
 
 	logger := h.Logger.C("user", user)
 
