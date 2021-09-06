@@ -57,24 +57,24 @@ func main() {
 		Logger:   Logger,
 	}
 
-	fs := http.FileServer(http.Dir("docs"))
+	fs := http.FileServer(http.Dir("doc"))
 
 	r := chi.NewRouter()
+	r.Route(fmt.Sprintf("/%s", env.Settings.Server.Context), func(r chi.Router) {
+		r.Get("/health", helloHandler.SayHello)
+		r.Get("/docs", fs.ServeHTTP)
 
-	r.Get("/health", helloHandler.SayHello)
-	r.Get("/docs", fs.ServeHTTP)
+		r.Route("/planets", func(r chi.Router) {
+			r.Get("/", apiHandler.FindAllPlanets)
+			r.Get("/name/{name:[a-z0-9_]+}", apiHandler.FindPlanetByName)
+			r.Get("/id/{planetID:[0-9]+}", apiHandler.FindPlanetByID)
 
-	r.Route("/planets", func(r chi.Router) {
-		r.Get("/", apiHandler.FindAllPlanets)
-		r.Get("/name/{name:[a-z0-9_]+}", apiHandler.FindPlanetByName)
-		r.Get("/id/{planetID:[0-9]+}", apiHandler.FindPlanetByID)
-		r.Get("/update-movies", apiHandler.SetMovieRefs)
+			r.Get("/update-movies", apiHandler.SetMovieRefs)
 
-		r.Post("/create", apiHandler.CreatePlanets)
-
-		r.Post("/update", apiHandler.PlanetUpdate)
-
-		r.Post("/delete", apiHandler.RemovePlanets)
+			r.Post("/create", apiHandler.CreatePlanets)
+			r.Post("/update", apiHandler.PlanetUpdate)
+			r.Post("/delete", apiHandler.RemovePlanets)
+		})
 	})
 
 	http.Handle("/", r)
