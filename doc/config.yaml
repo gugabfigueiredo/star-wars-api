@@ -1,0 +1,219 @@
+openapi: 3.0.0
+info:
+  title: STAR-WARS-API
+  version: 1.0.0
+  description: "This documentation describes the endpoints available for the STAR-WARS-API. Powerd by Golang and MongoDB"
+  contact:
+    email: gugabfigueiredo@gmail.com
+tags:
+  - name: CREATE
+  - name: READ
+  - name: UPDATE
+  - name: DELETE
+  - name: Misc
+paths:
+  /health:
+    get:
+      tags:
+        - Misc
+      summary: Health check
+      parameters:
+        - in: query
+          name: user
+      responses:
+        200:
+          description: Greets user to show server is up and running
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: string
+                example: {"Status": "OK", "Message": "Hello user"}
+        500:
+          description: Failed to say Hello
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  type: string
+                example: {"Status": "ERROR", "Message": "<error-message>"}
+  /docs:
+    get:
+      tags:
+        - Misc
+      summary: This documentation
+      responses:
+        200:
+          description: A page with the docs for this API
+  /planets:
+    get:
+      tags:
+        - READ
+      summary: Returns all the planets
+      responses:
+        200:
+          description: Returns a list of all the planets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Planet'
+        500:
+          description: Failed to query or marshal Planets data
+  /planets/name/{name}:
+    get:
+      tags:
+        - READ
+      summary: Returns a single planet by name
+      parameters:
+        - $ref: '#/components/parameters/PathName'
+      responses:
+        200:
+          description: A single planet document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Planet'
+        500:
+          description: Failed to query or unmarshal planet data
+  /planets/id/{planetID}:
+    get:
+      tags:
+        - READ
+      summary: Returns a single planet by id
+      parameters:
+        - $ref: '#/components/parameters/PathName'
+      responses:
+        200:
+          description: A single planet document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Planet'
+        500:
+          description: Failed to query or unmarshal planet data
+  /planets/update-movies:
+    get:
+      tags:
+        - UPDATE
+      summary: Update all planets movie reference counts; powered by swapi
+      responses:
+        200:
+          description: Successfully update database
+        500:
+          description: Failed to connect to swapi or update database
+  /planets/create:
+    post:
+      tags:
+        - CREATE
+      summary: Create planets
+      requestBody:
+        description: A list of planets to be inserted in the database
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Planet'
+      responses:
+        200:
+          description: An insert result object
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {"InsertedIDs": [1,2,3]}
+        500:
+          description: Failed to insert planets in database
+  /planets/update:
+    post:
+      tags:
+        - CREATE
+      summary: Update planets
+      requestBody:
+        description: A list of updated planets to be modified in the database
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Planet'
+      responses:
+        200:
+          description: A bulkwrite response object
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  InsertedCount:
+                    type: integer
+                    format: int64
+                  MatchedCount:
+                    type: integer
+                    format: int64
+                  ModifiedCount:
+                    type: integer
+                    format: int64
+                  DeletedCount:
+                    type: integer
+                    format: int64
+                  UpsertedCount:
+                    type: integer
+                    format: int64
+                  UpsertedIDs:
+                    type: object
+        500:
+          description: Failed to update planets in database
+  /planets/delete:
+    post:
+      tags:
+        - CREATE
+      summary: Delete planets
+      requestBody:
+        description: A list of planets to be deleted from the database
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Planet'
+      responses:
+        200:
+          description: An delete response object
+          content:
+            application/json:
+              schema:
+                type: object
+                example: {"DeletedCount": 3}
+        500:
+          description: Failed to delete planets from database
+components:
+  schemas:
+    Planet:
+      type: object
+      properties:
+        ID:
+          type: integer
+          format: int64
+        Name:
+          type: string
+        Climate:
+          type: string
+        Refs:
+          type: integer
+          format: int64
+  parameters:
+    PathID:
+      in: path
+      name: planetID
+      description: A Unique ID of the Planet
+      required: true
+    PathName:
+      in: path
+      name: name
+      description: Name of the Planet
+      required: true
