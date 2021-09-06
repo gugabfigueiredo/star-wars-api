@@ -24,7 +24,7 @@ type Config struct {
 	// the fields below can be skipped if this value is false!
 	FileLoggingEnabled bool `default:"true"`
 	// Directory to log to to when filelogging is enabled
-	Directory string `default:"/var/log"`
+	Directory string `default:"/var/log/sw-api-server"`
 	// Filename is the name of the logfile which will be placed inside the directory
 	Filename string `default:"sw-api-server"`
 	// MaxSize the max size in MB of the logfile before it's rolled
