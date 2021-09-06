@@ -13,8 +13,10 @@ import (
 type IRepo interface {
 	GetPlanet(interface{}, *model.Planet) error
 	GetAllPlanets() ([]*model.Planet, error)
-	UpdatePlanets(planets []swapi.Planet) (*mongo.BulkWriteResult, error)
-	InsertPlanets(planets []*model.Planet) (*mongo.InsertManyResult, error)
+	InsertPlanets([]model.Planet) (*mongo.InsertManyResult, error)
+	UpdatePlanets([]model.Planet) (*mongo.BulkWriteResult, error)
+	UpdateMovieRefs([]swapi.Planet) (*mongo.BulkWriteResult, error)
+	DeletePlanets([]model.Planet) (*mongo.DeleteResult, error)
 }
 
 type Repository struct {
@@ -66,15 +68,15 @@ func (r *Repository) GetAllPlanets() ([]*model.Planet, error) {
 	return results, nil
 }
 
-func (r *Repository) UpdatePlanets(planets []swapi.Planet) (*mongo.BulkWriteResult, error) {
+func (r *Repository) UpdateMovieRefs(planets []swapi.Planet) (*mongo.BulkWriteResult, error) {
 	var writes []mongo.WriteModel
 	for _, planet := range planets {
-		writes = append(writes, model.WritePlanetModel(&planet))
+		writes = append(writes, model.SwapiWritePlanetModel(&planet))
 	}
 	return r.Planets().BulkWrite(r.Context, writes, options.BulkWrite().SetOrdered(false))
 }
 
-func (r *Repository) InsertPlanets(planets []*model.Planet) (*mongo.InsertManyResult, error) {
+func (r *Repository) InsertPlanets(planets []model.Planet) (*mongo.InsertManyResult, error) {
 
 	var docs []interface{}
 	for _, planet := range planets {
@@ -92,4 +94,46 @@ func (r *Repository) InsertPlanets(planets []*model.Planet) (*mongo.InsertManyRe
 	}
 
 	return r.Planets().InsertMany(r.Context, docs, options.InsertMany().SetOrdered(false))
+}
+
+func (r *Repository) UpdatePlanets(planets []model.Planet) (*mongo.BulkWriteResult, error) {
+
+	var writes []mongo.WriteModel
+	for _, planet := range planets {
+		data, err := bson.Marshal(planet)
+		if err != nil {
+			r.Logger.E("failed to marshal planet", "err", err, "planet", planet)
+			return nil, err
+		}
+		var doc bson.D
+		if err := bson.Unmarshal(data, &doc); err != nil {
+			r.Logger.E("failed to unmarshal data into planet bson.D", "err", err, "data", data)
+		}
+
+		write := mongo.NewUpdateOneModel()
+		write.SetFilter(bson.M{"name": planet.Name})
+		write.SetUpdate(doc)
+		writes = append(writes, write)
+	}
+	return r.Planets().BulkWrite(r.Context, writes, options.BulkWrite().SetOrdered(false))
+}
+
+func (r *Repository) DeletePlanets(planets []model.Planet) (*mongo.DeleteResult, error) {
+
+	var docs []interface{}
+	for _, planet := range planets {
+		data, err := bson.Marshal(planet)
+		if err != nil {
+			r.Logger.E("failed to marshal planet", "err", err, "planet", planet)
+			return nil, err
+		}
+
+		var doc bson.D
+		if err := bson.Unmarshal(data, &doc); err != nil {
+			r.Logger.E("failed to unmarshal data into planet bson.D", "err", err, "data", data)
+		}
+		docs = append(docs, data)
+	}
+
+	return r.Planets().DeleteMany(r.Context, docs, options.Delete())
 }
