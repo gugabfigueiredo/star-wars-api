@@ -12,6 +12,8 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -34,7 +36,6 @@ func init() {
 func main() {
 
 	// Services
-
 	helloService := &service.HelloService{
 		Logger: Logger,
 	}
@@ -46,7 +47,6 @@ func main() {
 	}
 
 	// Handlers
-
 	helloHandler := &handler.HelloHandler{
 		Service: helloService,
 		Logger:  Logger,
@@ -57,16 +57,25 @@ func main() {
 		Logger:   Logger,
 	}
 
-	fs := http.FileServer(http.Dir("doc"))
+	// Create a route along /files that will serve contents from
+	// the ./data/ folder.
+	workDir, _ := os.Getwd()
+	docs := http.Dir(filepath.Join(workDir, "doc"))
 
 	r := chi.NewRouter()
 	r.Route(fmt.Sprintf("/%s", env.Settings.Server.Context), func(r chi.Router) {
+		r.Get("/docs", func(w http.ResponseWriter, r *http.Request) {
+			rctx := chi.RouteContext(r.Context())
+			pathPrefix := strings.TrimSuffix(rctx.RoutePattern(), "/*")
+			fs := http.StripPrefix(pathPrefix, http.FileServer(docs))
+			fs.ServeHTTP(w, r)
+		} )
+
 		r.Get("/health", helloHandler.SayHello)
-		r.Get("/docs", fs.ServeHTTP)
 
 		r.Route("/planets", func(r chi.Router) {
 			r.Get("/", apiHandler.FindAllPlanets)
-			r.Get("/name/{name:[a-z0-9_]+}", apiHandler.FindPlanetByName)
+			r.Get("/name/{name:[A-Za-z0-9_]+}", apiHandler.FindPlanetByName)
 			r.Get("/id/{planetID:[0-9]+}", apiHandler.FindPlanetByID)
 
 			r.Get("/update-movies", apiHandler.SetMovieRefs)
