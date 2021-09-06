@@ -7,7 +7,6 @@ import (
 	"github.com/gugabfigueiredo/star-wars-api/model"
 	"github.com/gugabfigueiredo/star-wars-api/service"
 	"go.mongodb.org/mongo-driver/bson"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -91,28 +90,23 @@ func (h *APIHandler) FindPlanetByID(w http.ResponseWriter, r *http.Request) {
 func (h *APIHandler) CreatePlanets(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	h.Logger.I("Landing creation request")
+	h.Logger.I("Create planet request")
 
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		h.Logger.E("Error on get body data for planets creation ", "err", err)
-		http.Error(w, "Error on get body data for planets creation", http.StatusInternalServerError)
-		return
-	}
-
-	var planets []*model.Planet
-	if err := json.Unmarshal(body, &planets); err != nil {
+	var planets []model.Planet
+	if err := json.NewDecoder(r.Body).Decode(&planets); err != nil {
 		h.Logger.E("Error on unmarshal planets payload for creation", "err", err, "planets", planets)
 		http.Error(w, "Error on unmarshal planets payload for creation", http.StatusInternalServerError)
-	}
-
-	if res, err := h.InsertPlanets(planets); err != nil {
-		h.Logger.E("Error on insert planets into database", "err", err, "res", res)
-		http.Error(w, "error on insert planets into database", http.StatusInternalServerError)
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode([]byte(`{"status":"success"}`)); err != nil {
+	res, err := h.InsertPlanets(planets)
+	if err != nil {
+		h.Logger.E("Error on insert planets into database", "err", err, "res", res)
+		http.Error(w, "Error on insert planets into database", http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
 		h.Logger.E("Error on writing to output stream", "err", err)
 		http.Error(w, "Error on writing to output stream", http.StatusInternalServerError)
 		return
@@ -120,10 +114,64 @@ func (h *APIHandler) CreatePlanets(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func (h *APIHandler) SetUpdatedPlanetRefs(w http.ResponseWriter, r *http.Request) {
+func (h *APIHandler) PlanetUpdate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	h.Logger.I("Landing creation request")
+	h.Logger.I("Update planets request")
+
+	var planets []model.Planet
+	if err := json.NewDecoder(r.Body).Decode(&planets); err != nil {
+		h.Logger.E("Error on unmarshal planets payload for creation", "err", err, "planets", planets)
+		http.Error(w, "Error on unmarshal planets payload for creation", http.StatusInternalServerError)
+		return
+	}
+
+	res, err := h.UpdatePlanets(planets)
+	if err != nil {
+		h.Logger.E("Error on insert planets into database", "err", err, "res", res)
+		http.Error(w, "Error on insert planets into database", http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		h.Logger.E("Error on writing to output stream", "err", err)
+		http.Error(w, "Error on writing to output stream", http.StatusInternalServerError)
+		return
+	}
+	return
+}
+
+func (h *APIHandler) RemovePlanets(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	h.Logger.I("Remove planet request")
+
+	var planets []model.Planet
+	if err := json.NewDecoder(r.Body).Decode(&planets); err != nil {
+		h.Logger.E("Error on unmarshal planets payload for creation", "err", err, "planets", planets)
+		http.Error(w, "Error on unmarshal planets payload for creation", http.StatusInternalServerError)
+		return
+	}
+
+	res, err := h.DeletePlanets(planets)
+	if err != nil {
+		h.Logger.E("Error on insert planets into database", "err", err, "res", res)
+		http.Error(w, "Error on insert planets into database", http.StatusInternalServerError)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(res); err != nil {
+		h.Logger.E("Error on writing to output stream", "err", err)
+		http.Error(w, "Error on writing to output stream", http.StatusInternalServerError)
+		return
+	}
+	return
+}
+
+func (h *APIHandler) SetMovieRefs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	h.Logger.I("Update planets movie refs")
 
 	if err := h.UpdatePlanetRefs(); err != nil {
 		h.Logger.E("failed to update planet refs by request", "err", err)
