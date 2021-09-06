@@ -100,40 +100,20 @@ func (r *Repository) UpdatePlanets(planets []model.Planet) (*mongo.BulkWriteResu
 
 	var writes []mongo.WriteModel
 	for _, planet := range planets {
-		data, err := bson.Marshal(planet)
-		if err != nil {
-			r.Logger.E("failed to marshal planet", "err", err, "planet", planet)
-			return nil, err
-		}
-		var doc bson.D
-		if err := bson.Unmarshal(data, &doc); err != nil {
-			r.Logger.E("failed to unmarshal data into planet bson.D", "err", err, "data", data)
-		}
-
-		write := mongo.NewUpdateOneModel()
-		write.SetFilter(bson.M{"name": planet.Name})
-		write.SetUpdate(doc)
-		writes = append(writes, write)
+		writes = append(writes, model.WritePlanetModel(&planet))
 	}
 	return r.Planets().BulkWrite(r.Context, writes, options.BulkWrite().SetOrdered(false))
 }
 
 func (r *Repository) DeletePlanets(planets []model.Planet) (*mongo.DeleteResult, error) {
 
-	var docs []interface{}
+	var names []string
 	for _, planet := range planets {
-		data, err := bson.Marshal(planet)
-		if err != nil {
-			r.Logger.E("failed to marshal planet", "err", err, "planet", planet)
-			return nil, err
-		}
-
-		var doc bson.D
-		if err := bson.Unmarshal(data, &doc); err != nil {
-			r.Logger.E("failed to unmarshal data into planet bson.D", "err", err, "data", data)
-		}
-		docs = append(docs, data)
+		names = append(names, planet.Name)
+	}
+	filter := bson.M{
+		"name": bson.M{"$in": names},
 	}
 
-	return r.Planets().DeleteMany(r.Context, docs, options.Delete())
+	return r.Planets().DeleteMany(r.Context, filter, options.Delete())
 }
