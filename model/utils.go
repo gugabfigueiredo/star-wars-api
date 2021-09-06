@@ -9,12 +9,24 @@ import (
 func SwapiWritePlanetModel(planet *swapi.Planet) mongo.WriteModel {
 	model := mongo.NewUpdateOneModel()
 	model.SetFilter(bson.M{"name": planet.Name})
-	model.SetUpdate(bson.M{
-		"name": planet.Name,
-		"weather": planet.Climate,
-		"terrain": planet.Terrain,
+	model.SetUpdate(bson.M{"$set": bson.M{
+		"name":       planet.Name,
+		"weather":    planet.Climate,
+		"terrain":    planet.Terrain,
 		"references": len(planet.FilmURLs),
-	})
+	}})
 	model.SetUpsert(true)
+	return model
+}
+
+func WritePlanetModel(planet *Planet) mongo.WriteModel {
+	model := mongo.NewUpdateOneModel()
+	model.SetFilter(bson.M{"name": planet.Name})
+	model.SetUpdate(bson.M{"$set": bson.M{
+		"name":       planet.Name,
+		"weather":    planet.Climate,
+		"terrain":    planet.Terrain,
+		"references": planet.Refs,
+	}})
 	return model
 }
