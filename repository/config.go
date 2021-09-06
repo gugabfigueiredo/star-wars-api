@@ -26,7 +26,8 @@ type Config struct {
 	Password string `default:"mongo_pass"`
 	Host string `default:"localhost"`
 	Port string `default:"27017"`
-	Context context.Context `default:"TODO"`
+	AuthDB string `default:"test"`
+	Context Context `default:"TODO"`
 }
 
 var Repo Repository
@@ -37,8 +38,8 @@ func MustInit(config *Config, logger *log.Logger) error {
 		Context: config.Context,
 	}
 	// Set client options
-	mongoURI := fmt.Sprintf("mongodb://%s:%s@%s:%s",
-		config.Username, config.Password, config.Host, config.Port)
+	mongoURI := fmt.Sprintf("mongodb://%s:%s@%s:%s/%s",
+		config.Username, config.Password, config.Host, config.Port, config.AuthDB)
 	clientOptions := options.Client().ApplyURI(mongoURI)
 
 	// Connect to MongoDB
