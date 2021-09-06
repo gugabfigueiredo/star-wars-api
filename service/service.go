@@ -10,7 +10,6 @@ import (
 type IService interface {
 	repository.IRepo
 	UpdatePlanetRefs() error
-	SchedulePlanetUpdate(interval time.Duration) chan bool
 }
 
 type ISwapi interface {
@@ -31,7 +30,7 @@ func (api *APIService) UpdatePlanetRefs() error {
 		return err
 	}
 	// update planets
-	res, err := api.UpdatePlanets(planets)
+	res, err := api.UpdateMovieRefs(planets)
 	if err != nil {
 		api.Logger.E("failed to write planets to database", "err", err, "result", res)
 		return err
