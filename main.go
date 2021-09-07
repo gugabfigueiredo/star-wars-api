@@ -60,7 +60,7 @@ func main() {
 	// Create a route along /files that will serve contents from
 	// the ./data/ folder.
 	workDir, _ := os.Getwd()
-	docs := http.Dir(filepath.Join(workDir, "doc"))
+	docs := http.Dir(filepath.Join(workDir, "docs"))
 
 	r := chi.NewRouter()
 	r.Route(fmt.Sprintf("/%s", env.Settings.Server.Context), func(r chi.Router) {
